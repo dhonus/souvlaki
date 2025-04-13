@@ -16,6 +16,19 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.8.2]
+
+### Fixed
+
+- Failing iOS import (#57 Thank you @will3942!)
+
+## [0.8.1]
+
+### Fixed
+
+- Android platform module error
+- Linux CI failing due to missing dependency
+
 ## [0.8.0]
 
 ### Added
