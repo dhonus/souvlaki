@@ -91,15 +91,28 @@ impl MediaControls {
         let event_handler = Arc::new(Mutex::new(event_handler));
         let (event_channel, rx) = mpsc::channel();
 
+        let (init_tx, init_rx) = mpsc::channel();
+
         self.thread = Some(ServiceThreadHandle {
             event_channel,
             thread: thread::spawn(move || {
-                pollster::block_on(run_service(dbus_name, friendly_name, event_handler, rx))
-                    .unwrap();
+                
+                if let Err(e) = pollster::block_on(run_service(dbus_name, friendly_name, event_handler, rx)) {
+                    let _ = init_tx.send(Err(Error::DbusError(e)));
+                    return;
+                }
+
+                let _ = init_tx.send(Ok(()));
             }),
         });
-        Ok(())
+
+        match init_rx.try_recv() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(e)) => Err(e),
+            Err(_) => Err(Error::ThreadPanicked),
+        }
     }
+
     /// Detach the event handler.
     pub fn detach(&mut self) -> Result<(), Error> {
         if let Some(ServiceThreadHandle {
